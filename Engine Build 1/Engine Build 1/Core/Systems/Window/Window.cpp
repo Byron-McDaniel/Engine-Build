@@ -4,6 +4,7 @@ Window Class.
 
 10:13 AM - 9/3/17 - Byron - Class created.
 5:53 PM - 9/9/17 - Byron - Modifications, adding more to the window implementation, likely won't be finished for this session.
+2:03 PM - 9/18/17 - Byron - Additional modifications, finishing the window Class to get first showable milestone.
 */
 
 #include "Window.h"
@@ -15,7 +16,7 @@ WindowData::WindowData()
 {
 
 }
-WindowData::WindowData(int w, int h, const std::tstring& title = _T("Engine Build v 0.01 PRE-ALPHA"), int b = 32, bool fs = false)
+WindowData::WindowData(int w, int h, const std::tstring& title, int b , bool fs)
 	:SystemData(SystemType::Sys_Window), width(w), height(h), bits(b), windowTitle(title), fullscreen(fs)
 {
 
@@ -31,6 +32,65 @@ ResizeData::ResizeData(bool resize, int nw, int nh)
 	: MustResize(resize), newWidth(nw), newHeight(nh)
 {
 
+}
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	if (msg == WM_CREATE)
+	{
+		/*
+		If the Message is WM_CREATE, then the lparam contains a pointer to a CREATRESTRUCT
+		The CREATESTRUCT contains the "this" Pointer from the CreateWindow method.
+		the "this" pointer of the application is stored in the constructpcs->lpCreateParams
+
+		*/
+		CREATESTRUCT* pCS = (CREATESTRUCT*)lparam;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)pCS->lpCreateParams);
+	}
+	else
+	{
+		//retrieve "this" pointer.
+		Window* pWindow = (Window*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		if (pWindow) { return pWindow->HandleEvent(hWnd, msg, wparam, lparam); }
+	}
+	return DefWindowProc(hWnd, msg, wparam, lparam);
+}
+LRESULT Window::HandleEvent(HWND hWnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	switch (msg)
+	{
+		case WM_ACTIVATE:
+		{
+			if (!HIWORD(wparam))
+				this->Activate();
+			else this->Deactivate();
+
+			return 0; //Make sure a crash doesn't occur?
+		}
+		case WM_SIZE:
+		{
+			UINT width = LOWORD(lparam);
+			UINT height = HIWORD(lparam);
+			m_ResizeData.MustResize = true;
+			m_ResizeData.newWidth = width;
+			m_ResizeData.newHeight = height;
+
+			return 0; 
+		}
+		case WM_DISPLAYCHANGE:
+		{
+			InvalidateRect(hWnd, NULL, FALSE);
+
+			return 0;
+
+		}
+		case WM_CLOSE:
+		{
+			PostQuitMessage(0); //In the Windows (the C++ Library) header file.
+			return 0;
+		}
+	}
+	return DefWindowProc(hWnd, msg, wparam, lparam); // If no conditions are met, the switch will automatically return to a default window proc.
 }
 
 Window::Window(const WindowData& data)
@@ -179,15 +239,19 @@ bool Window::Initialize()
 	SetFocus(m_hWindow);
 	//UpdateWindow(m_hWindow); //I'm assuming this'll be making the window initialize the render once we get to that class OR modify it if we drag it in some random direction.
 
-	m_ResizeData.mustResize = true;
+	m_ResizeData.MustResize = true;
 	m_ResizeData.newWidth = m_Width;
 	m_ResizeData.newHeight = m_Height;
 
+	/*
 	if (!this->CenterWindow())
 	{
 		//Logger::Log(_T("Failed to center the Window.", LOGTYPE_ERROR, true));
 		return false;
 	}
+	Guess we'll fix it later...
+	*/
+
 
 	//Disable closing button on a Debug window.
 	HWND hConsoleWnd = GetConsoleWindow();
@@ -223,8 +287,8 @@ bool Window::Update(Context& context)
 
 	//Small note, the brackets { & } don't necessarily need to be apart of the code for this, the compiler will automatically seperate them up if necessary.
 	//Borders such as those are usually required if you want to parse out your code.
-	if(context.pWnd != this) 
-		context.pWnd = this;
+	if(WINDOW != this) 
+		WINDOW = this;
 
 	return true;
 
@@ -237,7 +301,7 @@ bool Window::ShutDown()
 		ShowCursor(true);
 	}
 
-	//Are we able to release the DC?
+	//Are we able to release the DC? - Device Context.
 
 	//Set the DC to null.
 	if (m_hDC && !ReleaseDC(m_hWindow, m_hDC))

@@ -3,6 +3,7 @@ Header for Window class.
 
 
 10:13 AM - 9/3/17 - Byron - Header created.
+3:34 - 9/18/17 - Byron - NEEDLE HAS BEEN FOUND. I was wondering why it was complaining at me.
 
 */
 
@@ -52,8 +53,10 @@ class Window :	public System
 {
 
 	friend class Engine;
+
 public:
-	int GetWidth(), GetHeight();
+	int GetWidth();
+	int GetHeight();
 
 	HWND GetWindowHandle();
 	HDC GetDeviceContext();
@@ -84,6 +87,7 @@ private:
 	bool m_bFullscreen;
 
 	std::tstring m_Title;
+	ResizeData m_ResizeData; //HA! I Didn't define you.
 };
 
 #endif

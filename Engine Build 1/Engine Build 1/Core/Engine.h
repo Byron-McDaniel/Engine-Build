@@ -1,6 +1,8 @@
 /*
 Heartbeat headerfile; this is essentially heart of the engine.
 
+4:12 PM - 9/18/17 - Byron - Changed update from a constant because the value DOES change.
+
 */
 
 #ifndef _ENGINE_H
@@ -54,8 +56,8 @@ private:
 
 	//private methods
 	int Initialize();
-	int Draw(const Context& context);
-	int Update(const Context& context);
+	int Draw(Context& context);
+	int Update(Context& context);
 	int Shutdown();
 
 	//Needs a core system

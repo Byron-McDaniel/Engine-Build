@@ -1,6 +1,8 @@
 /*
 This is the heartbeat class. This is essentially the heart of the engine. After initialization, it will display the render and all that jazz.
 
+4:03 PM - 9/18/17 - Byron - Adding window startup to the class, and removed redundant code (pragma).
+
 */
 
 #include "Engine.h"
@@ -8,6 +10,7 @@ This is the heartbeat class. This is essentially the heart of the engine. After 
 //added include files.
 #include "System.h"
 #include "Game.h"
+#include "Window.h"
 
 #ifndef _DELETEMACRO_H
 #include "DeleteMacros.h"
@@ -33,15 +36,17 @@ Engine::~Engine()
 }
 
 
-//public
-#pragma region Public Methods
+// Public Methods
 
 int Engine::RunLoop()
 {
 
 	Context context;
 	if (!this->Initialize())
+	{		
 		return 0;
+	}
+
 
 	srand(GetTickCount());
 
@@ -65,14 +70,17 @@ int Engine::RunLoop()
 	//Logger::WriteLogFile();
 
 	if (!this->Shutdown())
+	{
 		return 0;
+	}
+
 	return msg.wParam;
 }
 
-#pragma endregion
+
 
 //Private
-#pragma region Private Methods
+
 int Engine::Initialize()
 {
 	m_EngineState = EngineState::Initializing;
@@ -84,18 +92,38 @@ int Engine::Initialize()
 		return false;
 	}
 
-	//add systems (none quite yet)
+	//add systems
+	if (!AddSystem(new Window(WindowData(640, 480))))
+	{
+		return false;
+	}
+		
 
+
+	//initialize the system.
+	if (!m_mapSystems[SystemType::Sys_Window]->Initialize())
+	{
+		return false;
+	}
 
 	return true;
 }
 
-int Engine::Draw(const Context& context)
+int Engine::Draw(Context& context)
 {
 	return true;
 }
-int Engine::Update(const Context& context)
+int Engine::Update(Context& context)
 {
+
+	for (std::pair<SystemType, System*> pSys : m_mapSystems)
+	{
+		if (!pSys.second)
+			continue;
+
+		pSys.second->Update(context);
+	}
+
 	return true;
 }
 
@@ -106,9 +134,9 @@ int Engine::Shutdown()
 	//delete the systems
 	for (std::pair<SystemType, System*>psys : m_mapSystems)
 	{
-		/*if (!psys.second->ShutDown())
+		/*if (!pSys.second->ShutDown())
 		{
-			//Log::Logger("I SHOT MYSELF IN THE FOOT! The system didn't shut down properly: " + psys->GetSystemType();
+			//Log::Logger("The system didn't shut down properly: " + pSys->GetSystemType();
 		}
 		*/
 
@@ -119,9 +147,9 @@ int Engine::Shutdown()
 	return true;
 }
 
-int Engine::AddSystem(System* psys)
+int Engine::AddSystem(System* pSys)
 {
-	auto element = m_mapSystems.insert(std::make_pair(psys->GetType(), psys));
+	auto element = m_mapSystems.insert(std::make_pair(pSys->GetType(), pSys));
 	if (element.second)
 	{
 		return true;
@@ -143,4 +171,3 @@ Game* Engine::CreateGame()
 	*/		
 	return game;
 }
-#pragma endregion
