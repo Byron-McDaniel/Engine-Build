@@ -1,3 +1,5 @@
+Note: Old and defunct project. VERY old, but I did not want to hide anything.
+
 9/3/17 - Window file/header created and extensively modified on 9/9/17.
 9/9/17 - System & Context header files modified to ensure compatability.
 9/18/17 - Finished implementation of the Window class, but hit a snag. Window won't initialize. Will possibly do more work on Friday to implement a logger to attempt to find the problem so I can pin point it and squash the bug.
